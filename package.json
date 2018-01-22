@@ -2,7 +2,8 @@
   "name": "jsx-i18n-message",
   "version": "0.0.1",
   "description": "Runtime for babel-plugin-transform-jsx-i18n.",
-  "main": "index.js",
+  "main": "lib/index.js",
+  "jsnext:main": "lib/index.js",
   "scripts": {
     "build": "babel src -d lib",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +15,9 @@
   "author": "Ilja Everilä",
   "license": "ISC",
   "dependencies": {
-    "prop-types": "^15.6.0",
+    "prop-types": "^15.6.0"
+  },
+  "peerDependencies": {
     "react": "^16.2.0"
   },
   "devDependencies": {
@@ -30,9 +33,7 @@
     "presets": [
       "react",
       ["env", {
-        "targets": {
-          "browsers": "last 2 versions"
-        }
+        "modules": false
       }]
     ]
   }
