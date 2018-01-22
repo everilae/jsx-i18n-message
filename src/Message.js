@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Children } from 'react';
 import PropTypes from 'prop-types';
 
 const TEXT = Symbol("text");
@@ -88,7 +88,7 @@ class Message extends Component {
     const { format, component, expressions, children } = this.props;
     return mapComponents(
       parse(format),
-      [ component, ...React.Children.toArray(children) ],
+      [ component, ...Children.toArray(children) ],
       expressions
     );
   }
