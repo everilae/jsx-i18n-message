@@ -1,0 +1,39 @@
+{
+  "name": "jsx-i18n-message",
+  "version": "0.0.1",
+  "description": "Runtime for babel-plugin-transform-jsx-i18n.",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src -d lib",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/everilae/jsx-i18n-message.git"
+  },
+  "author": "Ilja Everilä",
+  "license": "ISC",
+  "dependencies": {
+    "prop-types": "^15.6.0",
+    "react": "^16.2.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-react": "^6.24.0"
+  },
+  "bugs": {
+    "url": "https://github.com/everilae/jsx-i18n-message/issues"
+  },
+  "homepage": "https://github.com/everilae/jsx-i18n-message#readme",
+  "babel": {
+    "presets": [
+      "react",
+      ["env", {
+        "targets": {
+          "browsers": "last 2 versions"
+        }
+      }]
+    ]
+  }
+}
