@@ -25,13 +25,7 @@ function* tokenize(format) {
   }
 }
 
-export default function parse(format) {
-  const cached = cache.get(format);
-
-  if (cached) {
-    return cached;
-  }
-
+function parse(format) {
   const stack = [ { index: 0, children: [] } ];
   const tokenStream = tokenize(format);
 
@@ -72,7 +66,7 @@ export default function parse(format) {
     throw new Exception("Unmatched opening and closing elements");
   }
 
-  const tree = stack[0];
-  cache.put(format, tree);
-  return tree;
+  return stack[0];
 }
+
+export default cache.wrap(parse);

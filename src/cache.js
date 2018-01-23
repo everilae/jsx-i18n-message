@@ -59,6 +59,19 @@ export default {
   clear() {
     this.data.clear();
     this.list = list.create();
+  },
+
+  wrap(f) {
+    return arg => {
+      let value = this.get(arg);
+
+      if (!value) {
+        value = f(arg);
+        this.put(arg, value);
+      }
+
+      return value;
+    };
   }
 
 };
