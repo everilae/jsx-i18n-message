@@ -1,35 +1,64 @@
 'use strict';
 
+import * as list from "./list";
 
-// TODO: LRU?
+// Arbitrary constant alert...
+const MAX_CACHE_SIZE = 2048;
+
 export default {
 
-  size: 0,
-
-  data: {},
+  maxSize: MAX_CACHE_SIZE,
+  data: new Map(),
+  list: list.create(),
 
   put(key, value) {
-    if (!this.data.hasOwnProperty(key)) {
-      this.size++;
+    let node = this.data.get(key);
+    const { head, tail } = this.list;
+
+    if (!node) {
+      node = {
+        key, value,
+        next: null, prev: null
+      }
+
+      this.data.set(key, node);
+    } else {
+      list.remove(node);
+      node.value = value;
     }
 
-    this.data[key] = value;
+    list.insertAfter(head, node);
+
+    if (this.data.size > this.maxSize) {
+      this.remove(tail.prev.key);
+    }
   },
 
   get(key) {
-    return this.data[key];
-  },
+    const node = this.data.get(key);
+    const { head } = this.list;
 
-  remove(key) {
-    if (this.data.hasOwnProperty(key)) {
-      delete this.data[key];
-      this.size--;
+    if (node) {
+      list.remove(node);
+      list.insertAfter(head, node);
+      return node.value;
     }
   },
 
+  remove(key) {
+    const node = this.data.get(key);
+
+    if (node) {
+      list.remove(node);
+      this.data.delete(key);
+    }
+
+    return !!node;
+  },
+
   clear() {
-    this.data = {};
-    this.size = 0;
+    this.data.clear();
+    this.list = list.create();
   }
 
 };
