@@ -6,13 +6,30 @@ const TEXT = Symbol("text");
 const INDEX = Symbol("index");
 const OPEN_ELEMENT = Symbol("[");
 const CLOSE_ELEMENT = Symbol("]");
+const OPEN_EXPRESSION = Symbol("{");
+const CLOSE_EXPRESSION = Symbol("}");
+
+function next(stream, ofType) {
+  const { value: { type, value } } = stream.next();
+
+  if (ofType != null && type !== ofType) {
+    throw new Error(`Expected ${String(ofType)}, got ${String(type)}`);
+  }
+
+  return value;
+}
 
 function* tokenize(format) {
-  const matcher = /((?:[^\[\]\\]|\\.)+)|(\[)(\d+):|(\])/g;
+  const matcher = /((?:[^[\]{}\\]|\\.)+)|(\[)(\d+):|(\])|({)|(})/g;
 
   let match;
   while (match = matcher.exec(format)) {
-    const [ , text, openElement, index, closeElement ] = match;
+    const [ , text
+            , openElement
+            , index
+            , closeElement
+            , openExpression
+            , closeExpression ] = match;
 
     if (text) {
       yield { type: TEXT, value: text };
@@ -21,6 +38,10 @@ function* tokenize(format) {
       yield { type: INDEX, value: +index };
     } else if (closeElement) {
       yield { type: CLOSE_ELEMENT };
+    } else if (openExpression) {
+      yield { type: OPEN_EXPRESSION };
+    } else if (closeExpression) {
+      yield { type: CLOSE_EXPRESSION };
     }
   }
 }
@@ -37,17 +58,8 @@ function parse(format) {
 
       case OPEN_ELEMENT: {
         // INDEX must follow OPEN_ELEMENT
-        const {
-          value: { type: nextType, value: nextValue }
-          // Ignore `done`. If the stream ends abruptly the next iteration
-          // will catch that.
-        } = tokenStream.next();
-
-        if (nextType !== INDEX) {
-          throw new Exception("Opening element not followed by index");
-        }
-
-        const node = { index: nextValue, children: [] };
+        const index = next(tokenStream, INDEX);
+        const node = { index, children: [] };
         stack[stack.length - 1].children.push(node);
         stack.push(node);
         break;
@@ -57,13 +69,20 @@ function parse(format) {
         stack.pop();
         break;
 
+      case OPEN_EXPRESSION: {
+        const expr = next(tokenStream, TEXT);
+        void next(tokenStream, CLOSE_EXPRESSION);
+        stack[stack.length - 1].children.push({ expr });
+        break;
+      }
+
       default:
-        throw new Exception(`Invalid token ${type}`);
+        throw new Error(`Invalid token ${String(type)}`);
     }
   }
 
   if (stack.length !== 1) {
-    throw new Exception("Unmatched opening and closing elements");
+    throw new Error("Unmatched opening and closing elements");
   }
 
   return stack[0];
