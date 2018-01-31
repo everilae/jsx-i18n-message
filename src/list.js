@@ -9,6 +9,11 @@ export function create() {
 }
 
 
+export function node(key, value) {
+  return { key, value, next: null, prev: null };
+}
+
+
 export function remove(node) {
   node.prev.next = node.next;
   node.next.prev = node.prev;

@@ -16,11 +16,7 @@ export default {
     const { head, tail } = this.list;
 
     if (!node) {
-      node = {
-        key, value,
-        next: null, prev: null
-      }
-
+      node = list.node(key, value);
       this.data.set(key, node);
     } else {
       list.remove(node);
@@ -38,7 +34,7 @@ export default {
     const node = this.data.get(key);
     const { head } = this.list;
 
-    if (node) {
+    if (node && head.next !== node) {
       list.remove(node);
       list.insertAfter(head, node);
       return node.value;

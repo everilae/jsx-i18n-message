@@ -3,24 +3,45 @@
 import cache from './cache';
 
 const TEXT = Symbol("text");
-const INDEX = Symbol("index");
+const INDEX = Symbol("element.index");
 const OPEN_ELEMENT = Symbol("[");
 const CLOSE_ELEMENT = Symbol("]");
 const OPEN_EXPRESSION = Symbol("{");
 const CLOSE_EXPRESSION = Symbol("}");
 
+const ERROR_EOI = "Unexpected end of input while parsing";
+
 function next(stream, ofType) {
-  const { value: { type, value } } = stream.next();
+  const { value: token, done } = stream.next();
+
+  if (ofType != null && done) {
+    throw new Error(ERROR_EOI);
+  }
+
+  const { type, meta, value } = token; 
 
   if (ofType != null && type !== ofType) {
-    throw new Error(`Expected ${String(ofType)}, got ${String(type)}`);
+    throw new Error(`Unexpected ${String(type)} at column ${meta.index}`);
   }
 
   return value;
 }
 
+function token(type, meta, value) {
+  return { type, value, meta };
+}
+
 function* tokenize(format) {
-  const matcher = /((?:[^[\]{}\\]|\\.)+)|(\[)(\d+):|(\])|({)|(})/g;
+  /* Tokens:
+   *
+   * ((?:[^[\]{}\\]|\\.)+)  - text (anything but unescaped reserved tokens)
+   * | (\[)(\d+):           - open element, followed by index
+   * | (\])                 - close element
+   * | ({)                  - open expression
+   * | (})                  - close expression
+   * | ([[])                - invalid tokens: lone [ etc.
+   */
+  const matcher = /((?:[^[\]{}\\]|\\.)+)|(\[)(\d+):|(\])|({)|(})|([[])/g;
 
   let match;
   while (match = matcher.exec(format)) {
@@ -29,19 +50,31 @@ function* tokenize(format) {
             , index
             , closeElement
             , openExpression
-            , closeExpression ] = match;
+            , closeExpression
+            , invalid ] = match;
+
+    const meta = { format,
+                   index: match.index,
+                   lastIndex: matcher.lastIndex };
 
     if (text) {
-      yield { type: TEXT, value: text };
-    } else if (openElement) {
-      yield { type: OPEN_ELEMENT };
-      yield { type: INDEX, value: +index };
-    } else if (closeElement) {
-      yield { type: CLOSE_ELEMENT };
-    } else if (openExpression) {
-      yield { type: OPEN_EXPRESSION };
-    } else if (closeExpression) {
-      yield { type: CLOSE_EXPRESSION };
+      yield token(TEXT, meta, text);
+    }
+    else if (openElement) {
+      yield token(OPEN_ELEMENT, meta);
+      yield token(INDEX, meta, +index);
+    }
+    else if (closeElement) {
+      yield token(CLOSE_ELEMENT, meta);
+    }
+    else if (openExpression) {
+      yield token(OPEN_EXPRESSION, meta);
+    }
+    else if (closeExpression) {
+      yield token(CLOSE_EXPRESSION, meta);
+    }
+    else if (invalid) {
+      throw new Error(`Unexpected token at column ${match.index}`);
     }
   }
 }
@@ -71,18 +104,18 @@ function parse(format) {
 
       case OPEN_EXPRESSION: {
         const expr = next(tokenStream, TEXT);
-        void next(tokenStream, CLOSE_EXPRESSION);
+        next(tokenStream, CLOSE_EXPRESSION);
         stack[stack.length - 1].children.push({ expr });
         break;
       }
 
       default:
-        throw new Error(`Invalid token ${String(type)}`);
+        throw new Error(`Unhandled token ${String(type)}`);
     }
   }
 
   if (stack.length !== 1) {
-    throw new Error("Unmatched opening and closing elements");
+    throw new Error(ERROR_EOI);
   }
 
   return stack[0];
