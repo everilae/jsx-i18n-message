@@ -31,17 +31,18 @@ function token(type, meta, value) {
   return { type, value, meta };
 }
 
+const MATCHER = [
+  String.raw`((?:[^[\]{}\\]|\\.)+)`,  // text (anything but unescaped reserved tokens)
+  String.raw`(\[)(\d+):`,  // open element, followed by index
+  String.raw`(\])`,  // close element
+  String.raw`({)`,  // open expression
+  String.raw`(})`,  // close expression
+  String.raw`([[])`  // invalid tokens: lone [ etc.
+].join('|');
+
+
 function* tokenize(format) {
-  /* Tokens:
-   *
-   * ((?:[^[\]{}\\]|\\.)+)  - text (anything but unescaped reserved tokens)
-   * | (\[)(\d+):           - open element, followed by index
-   * | (\])                 - close element
-   * | ({)                  - open expression
-   * | (})                  - close expression
-   * | ([[])                - invalid tokens: lone [ etc.
-   */
-  const matcher = /((?:[^[\]{}\\]|\\.)+)|(\[)(\d+):|(\])|({)|(})|([[])/g;
+  const matcher = new RegExp(MATCHER, "g");
 
   let match;
   while (match = matcher.exec(format)) {
