@@ -18,7 +18,7 @@ function next(stream, ofType) {
     throw new Error(ERROR_EOI);
   }
 
-  const { type, meta, value } = token; 
+  const { type, meta, value } = token;
 
   if (ofType != null && type !== ofType) {
     throw new Error(`Unexpected ${String(type)} at column ${meta.index}`);
@@ -31,9 +31,13 @@ function token(type, meta, value) {
   return { type, value, meta };
 }
 
+// text = ... ;
+// expression = "{" , text , "}" ;
+// element = "[" , natural number , ":" , { text | expression | element } , "]" ;
+// grammar = { text | expression | element } ;
 const MATCHER = [
   String.raw`((?:[^[\]{}\\]|\\.)+)`,  // text (anything but unescaped reserved tokens)
-  String.raw`(\[)(\d+):`,  // open element, followed by index
+  String.raw`(\[)([1-9]\d*):`,  // open element, followed by index
   String.raw`(\])`,  // close element
   String.raw`({)`,  // open expression
   String.raw`(})`,  // close expression
@@ -75,7 +79,7 @@ function* tokenize(format) {
       yield token(CLOSE_EXPRESSION, meta);
     }
     else if (invalid) {
-      throw new Error(`Unexpected token at column ${match.index}`);
+      throw new Error(`Unexpected '[' at column ${match.index}`);
     }
   }
 }
@@ -84,7 +88,7 @@ function parse(format) {
   const stack = [ { index: 0, children: [] } ];
   const tokenStream = tokenize(format);
 
-  for (const { type, value } of tokenStream) {
+  for (const { type, value, meta } of tokenStream) {
     switch (type) {
       case TEXT:
         stack[stack.length - 1].children.push(value);
@@ -101,6 +105,9 @@ function parse(format) {
 
       case CLOSE_ELEMENT:
         stack.pop();
+        if (!stack.length) {
+          throw new Error(`Unexpected ']' at column ${meta.index}`);
+        }
         break;
 
       case OPEN_EXPRESSION: {
@@ -111,7 +118,7 @@ function parse(format) {
       }
 
       default:
-        throw new Error(`Unhandled token ${String(type)}`);
+        throw new Error(`Unhandled token ${String(type)} at column ${meta.index}`);
     }
   }
 
