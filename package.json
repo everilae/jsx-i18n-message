@@ -3,12 +3,15 @@
   "version": "0.0.1",
   "description": "Runtime for babel-plugin-transform-jsx-i18n.",
   "main": "lib/index.js",
-  "jsnext:main": "lib/index.js",
+  "jsnext:main": "src/index.js",
   "scripts": {
     "build": "babel src -d lib",
-    "prepack": "\"$npm_execpath\" run build",
+    "prepare": "\"$npm_execpath\" run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "lib"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/everilae/jsx-i18n-message.git"
@@ -22,9 +25,10 @@
     "react": "^16.2.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.24.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-react": "^6.24.0"
+    "@babel/cli": "^7.9.0",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.11.0",
+    "@babel/preset-react": "^7.10.4"
   },
   "bugs": {
     "url": "https://github.com/everilae/jsx-i18n-message/issues"
@@ -32,10 +36,8 @@
   "homepage": "https://github.com/everilae/jsx-i18n-message#readme",
   "babel": {
     "presets": [
-      "react",
-      ["env", {
-        "modules": false
-      }]
+      "@babel/preset-react",
+      "@babel/preset-env"
     ]
   }
 }
