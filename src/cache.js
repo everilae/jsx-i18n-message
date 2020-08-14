@@ -32,11 +32,15 @@ export default {
 
   get(key) {
     const node = this.data.get(key);
-    const { head } = this.list;
 
-    if (node && head.next !== node) {
-      list.remove(node);
-      list.insertAfter(head, node);
+    if (node) {
+      const { head } = this.list;
+
+      if (head.next !== node) {
+        list.remove(node);
+        list.insertAfter(head, node);
+      }
+
       return node.value;
     }
   },
